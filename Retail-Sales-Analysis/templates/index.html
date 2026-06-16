@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Sales Performance Analysis Dashboard</title>
+    <!-- Inter and Space Grotesk Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js Libraries CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Shared Styles sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- SIDE/HEADER NAVIGATION -->
+    <header className="header-nav">
+        <div className="container header-container">
+            <div className="logo-group">
+                <span className="logo-badge">📊</span>
+                <div className="logo-titles">
+                    <h1>Retail Sales Performance Analysis</h1>
+                    <p className="subtitle">B.Tech Minor Project Dashboard (Flask + Pandas)</p>
+                </div>
+            </div>
+            <div className="action-links">
+                <a href="https://github.com" target="_blank" className="btn btn-secondary font-mono">Academic Report Code</a>
+            </div>
+        </div>
+    </header>
+
+    <main className="container main-content">
+
+        <!-- ERROR OR NOTIFICATION FLASH WINDOWS -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div className="flash-alert alert-{{ category }}">
+                        <p><strong>System Message:</strong> {{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- LANDING SCREEN (WHEN NO RESULTS ARE COMPILED) -->
+        {% if not results %}
+        <section className="landing-card animate-fade">
+            <div className="landing-head">
+                <span className="pill-tag">DATA ANALYTICS LAB</span>
+                <h2>Upload sales CSV file to evaluate corporate margins</h2>
+                <p>A simple, powerful business-ready pipeline designed with Python, Flask and web standards to help visual sales indicators across standard commercial metrics.</p>
+            </div>
+
+            <div className="upload-wrapper">
+                <form action="/" method="POST" enctype="multipart/form-data" className="upload-form">
+                    <div className="upload-dropzone" onclick="document.getElementById('csv-file-selector').click();">
+                        <input type="file" id="csv-file-selector" name="file" accept=".csv" required style="display: none;" onchange="this.form.submit();">
+                        <div className="upload-icon">📁</div>
+                        <h3>Select Retail Sales CSV Document</h3>
+                        <p>Supported standard schema: Order ID, Sales, Profit, Segment, etc.</p>
+                        <span className="file-badge">Limit: CSV format</span>
+                    </div>
+                    <div className="submit-row">
+                        <button type="submit" className="btn btn-primary">Process and Analyze Dataset →</button>
+                    </div>
+                </form>
+            </div>
+
+            <div className="schema-info-grid">
+                <div className="schema-card">
+                    <h4>Required Schema Standard</h4>
+                    <p>Make sure the columns match our dynamic reader engine:</p>
+                    <div className="schema-labels font-mono">
+                        <span>Order ID</span>
+                        <span>Order Date</span>
+                        <span>Sales</span>
+                        <span>Profit</span>
+                        <span>Quantity</span>
+                        <span>Region</span>
+                        <span>Category</span>
+                        <span>Product Name</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {% else %}
+
+        <!-- DASHBOARD CONTAINER (WHEN RESULTS GATHERED) -->
+        <section className="dashboard-view animate-fade">
+            
+            <!-- Quick reset header row -->
+            <div className="dashboard-results-head">
+                <div className="results-info">
+                    <h3>Operational Metrics Consolidated</h3>
+                    <p>Evaluated from compiled multi-channel logs successfully.</p>
+                </div>
+                <a href="/" className="btn btn-secondary flex-center gap-1">
+                    <span>🔄</span> Upload Different CSV
+                </a>
+            </div>
+
+            <!-- SECTION 1: KPI CARDS BAR -->
+            <div className="kpi-row">
+                <!-- CARD 1: Total Sales -->
+                <div className="kpi-card bg-indigo-gradient">
+                    <div className="kpi-icon">💰</div>
+                    <div className="kpi-body">
+                        <span className="kpi-label">TOTAL SALES</span>
+                        <h3 className="kpi-value">₹{{ "{:,.2f}".format(results.metrics.total_sales) }}</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 2: Total Net Profit -->
+                <div className="kpi-card bg-emerald-gradient">
+                    <div className="kpi-icon">📈</div>
+                    <div className="kpi-body">
+                        <span className="kpi-label">TOTAL NET PROFIT</span>
+                        <h3 className="kpi-value">₹{{ "{:,.2f}".format(results.metrics.total_profit) }}</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Unique Orders count -->
+                <div className="kpi-card bg-blue-gradient">
+                    <div className="kpi-icon">🛒</div>
+                    <div className="kpi-body">
+                        <span className="kpi-label">TOTAL ORDERS</span>
+                        <h3 className="kpi-value">{{ "{:,}".format(results.metrics.total_orders) }}</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 4: Avg Order calculation -->
+                <div className="kpi-card bg-violet-gradient">
+                    <div className="kpi-icon">👥</div>
+                    <div className="kpi-body">
+                        <span className="kpi-label">AVG SALES / ORDER</span>
+                        <h3 className="kpi-value">₹{{ "{:,.2f}".format(results.metrics.avg_sales_per_order) }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2 & 3: TREND LINES & BAR GRAPH GRID -->
+            <div className="dashboard-grid grid-2">
+                
+                <!-- Monthly trend LINE graph -->
+                <div className="chart-card flex-col">
+                    <div className="chart-head">
+                        <h4>Monthly sales & profit trajectories</h4>
+                        <span className="section-label">Section 2</span>
+                    </div>
+                    <div className="canvas-wrapper">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sales & Profit by Category charts -->
+                <div className="chart-card flex-col">
+                    <div className="chart-head">
+                        <h4>Sales & profits by Product Category</h4>
+                        <span className="section-label">Section 3</span>
+                    </div>
+                    <div className="canvas-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Geography Bar charts -->
+                <div className="chart-card flex-col">
+                    <div className="chart-head">
+                        <h4>Regional performance metrics</h4>
+                        <span className="section-label">Section 4</span>
+                    </div>
+                    <div className="canvas-wrapper">
+                        <canvas id="regionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Segmentation Distribution chart -->
+                <div className="chart-card flex-col">
+                    <div className="chart-head">
+                        <h4>Orders by customer demographic segment</h4>
+                        <span className="section-label">Section 5</span>
+                    </div>
+                    <div className="canvas-wrapper flex-center">
+                        <div className="doughnut-container">
+                            <canvas id="segmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SECTION 4: PRODUCT LEADERBOARDS -->
+            <div className="dashboard-grid grid-1 mt-4">
+                <div className="chart-card flex-col">
+                    <div className="chart-head">
+                        <h4>Top 10 selling inventory items limit</h4>
+                        <span className="section-label">Section 6</span>
+                    </div>
+                    <div className="canvas-wrapper select-h-120">
+                        <canvas id="productsBillboardChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 6: AUTOMATED BUSINESS INSIGHTS CARDS -->
+            <div className="insights-section mt-6">
+                <div className="insights-head">
+                    <span className="insights-icon">💡</span>
+                    <h3>Automated Business Insights</h3>
+                </div>
+                <div className="insights-grid">
+                    {% for insight in results.insights %}
+                    <div className="insight-card">
+                        <p>{{ insight }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </section>
+        {% endif %}
+
+    </main>
+
+    <footer className="main-footer">
+        <p>© 2026 Retail Performance Sandbox. Programmed for college reporting guidelines and project evaluations.</p>
+    </footer>
+
+    <!-- EMIT RECHART/CHARTJS STATE ENCODINGS FOR SCRIPT ACCESS -->
+    {% if results %}
+    <script id="results-data-island" type="application/json">
+        {
+            "monthly_trend": {{ results.monthly_trend|tojson }},
+            "category_data": {{ results.category_data|tojson }},
+            "region_data": {{ results.region_data|tojson }},
+            "top_products": {{ results.top_products|tojson }},
+            "segment_data": {{ results.segment_data|tojson }}
+        }
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% endif %}
+
+</body>
+</html>

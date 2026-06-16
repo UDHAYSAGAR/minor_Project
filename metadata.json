@@ -1,0 +1,6 @@
+{
+  "name": "Retail Sales Performance Analysis Dashboard",
+  "description": "A beginner-friendly retail sales performance analysis dashboard for uploading and analyzing sales CSV files.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
